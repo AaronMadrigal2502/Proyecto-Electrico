@@ -44,8 +44,12 @@ def download_audio(url: str, output_dir: str) -> str:
     output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
     ydl_opts = {
-        "format": "bestaudio/best",
+        "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": output_template,
+	"continuedl": True,
+	"retries": 10,
+	"fragment_retries": 10,
+	"ignoreerrors": False,
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -53,6 +57,10 @@ def download_audio(url: str, output_dir: str) -> str:
                 "preferredquality": "192",
             }
         ],
+	"postprocessor_args": [
+		"-ar", "16000",
+		"-ac", "1"
+	],
         "quiet": False,
     }
 
