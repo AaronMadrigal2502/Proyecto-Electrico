@@ -8,8 +8,14 @@ Funcionalidades:
 4. Remuestrea el audio a 16 kHz mono.
 5. Segmenta el audio en ventanas fijas para procesamiento posterior.
 
-Autor: [Nombre del estudiante]
-Semana 6 - Proyecto LAPA
+Aarón Madrigal Marín - C14373
+
+Ejemplo de ejecución:
+python scripts/acquire_preprocess_audio.py \
+  --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION" \
+  --segment_duration 30 \
+  --sample_rate 16000
+
 """
 
 import os
