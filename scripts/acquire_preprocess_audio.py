@@ -10,11 +10,18 @@ Funcionalidades:
 
 Aarón Madrigal Marín - C14373
 
+ESTE CÓDIGO FUE GENERADO CON AYUDA DE HERRAMIENTAS DE INTELIGENCIA ARTIFICIAL, SE 
+DEPURÓ TANTO MANUALMENTE COMO CON AYUDA DE LA HERRAMIENTA Y SE COMPROBÓ SU CORRECTO 
+FUNCIONAMIENTO.
+
+
 Ejemplo de ejecución:
-python scripts/acquire_preprocess_audio.py \
-  --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION" \
-  --segment_duration 30 \
+python3 scripts/acquire_preprocess_audio.py 
+  --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION" 
+  --segment_duration 30 
   --sample_rate 16000
+o simplemente:
+python3 scripts/acquire_preprocess_audio.py --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION"
 
 """
 
@@ -29,10 +36,10 @@ from tqdm import tqdm
 
 def download_audio(url: str, output_dir: str) -> str:
     """
-    Descarga el audio de una sesión legislativa desde una URL pública.
+    Descarga el audio desde una URL pública.
 
     Args:
-        url: Enlace de la sesión legislativa.
+        url: Enlace.
         output_dir: Carpeta donde se guardará el archivo descargado.
 
     Returns:
@@ -44,12 +51,18 @@ def download_audio(url: str, output_dir: str) -> str:
     output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
     ydl_opts = {
+
+		# Prioriza audio m4a por estabilidad
         "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": output_template,
+
+	# Reintentos en caso de fallos
 	"continuedl": True,
 	"retries": 10,
 	"fragment_retries": 10,
 	"ignoreerrors": False,
+
+		# Conversión a .wav
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -57,6 +70,8 @@ def download_audio(url: str, output_dir: str) -> str:
                 "preferredquality": "192",
             }
         ],
+
+	# Fuerza el audio a mono y 16kHz
 	"postprocessor_args": [
 		"-ar", "16000",
 		"-ac", "1"
@@ -64,6 +79,7 @@ def download_audio(url: str, output_dir: str) -> str:
         "quiet": False,
     }
 
+	# Descarga el audio
     with YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
         filename = ydl.prepare_filename(info)
@@ -73,7 +89,7 @@ def download_audio(url: str, output_dir: str) -> str:
 
 def normalize_audio(audio: np.ndarray) -> np.ndarray:
     """
-    Normaliza la amplitud del audio al rango [-1, 1].
+    Normaliza la amplitud del audio.
 
     Args:
         audio: Señal de audio.
@@ -92,7 +108,7 @@ def normalize_audio(audio: np.ndarray) -> np.ndarray:
 
 def preprocess_audio(input_path: str, output_path: str, sample_rate: int = 16000) -> None:
     """
-    Carga, remuestrea, convierte a mono y normaliza un archivo de audio.
+    Convierte el audio a mono, 16 kHz y lo normaliza.
 
     Args:
         input_path: Ruta del audio original.
@@ -100,10 +116,16 @@ def preprocess_audio(input_path: str, output_path: str, sample_rate: int = 16000
         sample_rate: Frecuencia de muestreo objetivo.
     """
 
+	# Carga y remuestrea
     audio, sr = librosa.load(input_path, sr=sample_rate, mono=True)
+
+	# Normaliza la señal
     audio = normalize_audio(audio)
 
+	# Crea la carpeta de salida
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+	# Guarda el audio procesado
     sf.write(output_path, audio, sample_rate)
 
 
@@ -114,7 +136,7 @@ def segment_audio(
     sample_rate: int = 16000
 ) -> None:
     """
-    Segmenta un archivo de audio en ventanas de duración fija.
+    Divide el audio en segmentos fijos.
 
     Args:
         input_path: Ruta del audio normalizado.
@@ -125,19 +147,24 @@ def segment_audio(
 
     os.makedirs(output_dir, exist_ok=True)
 
+	# Carga el audio procesado
     audio, sr = librosa.load(input_path, sr=sample_rate, mono=True)
+
+	# Cantidad de muestras por segmento
     samples_per_segment = segment_duration * sample_rate
 
     total_segments = int(np.ceil(len(audio) / samples_per_segment))
 
     base_name = os.path.splitext(os.path.basename(input_path))[0]
 
+	# Recorre todos los segmentos
     for i in tqdm(range(total_segments), desc="Segmentando audio"):
         start = i * samples_per_segment
         end = start + samples_per_segment
 
         segment = audio[start:end]
 
+		# Completa con ceros el último segmento
         if len(segment) < samples_per_segment:
             padding = samples_per_segment - len(segment)
             segment = np.pad(segment, (0, padding), mode="constant")
@@ -145,10 +172,13 @@ def segment_audio(
         segment_name = f"{base_name}_segment_{i:04d}.wav"
         segment_path = os.path.join(output_dir, segment_name)
 
+		# Guarda el segmento
         sf.write(segment_path, segment, sample_rate)
 
 
 def main():
+
+	# Configuración de argumentos
     parser = argparse.ArgumentParser(
         description="Descarga, normaliza y segmenta sesiones legislativas para el proyecto LAPA."
     )
@@ -163,6 +193,8 @@ def main():
     args = parser.parse_args()
 
     print("Descargando audio...")
+
+	# Se descarga el audio original
     raw_audio_path = download_audio(args.url, args.raw_dir)
 
     normalized_path = os.path.join(
@@ -171,6 +203,8 @@ def main():
     )
 
     print("Preprocesando audio...")
+
+	# Se procesa el audio
     preprocess_audio(
         input_path=raw_audio_path,
         output_path=normalized_path,
@@ -178,6 +212,8 @@ def main():
     )
 
     print("Segmentando audio...")
+	
+	# Se generan los segmentos
     segment_audio(
         input_path=normalized_path,
         output_dir=args.segments_dir,
