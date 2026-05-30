@@ -5,3 +5,7 @@ soundfile
 numpy
 tqdm
 ffmpeg
+
+torch
+torchaudio
+pyannote.audio
