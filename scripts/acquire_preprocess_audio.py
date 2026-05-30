@@ -6,7 +6,7 @@ Funcionalidades:
 2. Convierte el audio a formato WAV.
 3. Normaliza la señal.
 4. Remuestrea el audio a 16 kHz mono.
-5. Segmenta el audio en ventanas fijas para procesamiento posterior.
+5. Segmenta el audio automáticamente por hablante mediante diarización.
 
 Aarón Madrigal Marín - C14373
 
@@ -30,6 +30,8 @@ import argparse
 import numpy as np
 import librosa
 import soundfile as sf
+import csv
+from pyannote.audio import Pipeline
 from yt_dlp import YoutubeDL
 from tqdm import tqdm
 
@@ -129,52 +131,52 @@ def preprocess_audio(input_path: str, output_path: str, sample_rate: int = 16000
     sf.write(output_path, audio, sample_rate)
 
 
-def segment_audio(
+def diarize_audio(
     input_path: str,
     output_dir: str,
-    segment_duration: int = 30,
+    hf_token: str,
     sample_rate: int = 16000
 ) -> None:
     """
-    Divide el audio en segmentos fijos.
-
-    Args:
-        input_path: Ruta del audio normalizado.
-        output_dir: Carpeta donde se guardarán los segmentos.
-        segment_duration: Duración de cada segmento en segundos.
-        sample_rate: Frecuencia de muestreo del audio.
+    Segmenta el audio según los cambios de hablante.
     """
 
     os.makedirs(output_dir, exist_ok=True)
 
-	# Carga el audio procesado
+    pipeline = Pipeline.from_pretrained(
+        "pyannote/speaker-diarization-3.1",
+        use_auth_token=hf_token
+    )
+
+    diarization = pipeline(input_path)
+
     audio, sr = librosa.load(input_path, sr=sample_rate, mono=True)
 
-	# Cantidad de muestras por segmento
-    samples_per_segment = segment_duration * sample_rate
-
-    total_segments = int(np.ceil(len(audio) / samples_per_segment))
-
     base_name = os.path.splitext(os.path.basename(input_path))[0]
+    metadata_path = os.path.join(output_dir, f"{base_name}_metadata.csv")
 
-	# Recorre todos los segmentos
-    for i in tqdm(range(total_segments), desc="Segmentando audio"):
-        start = i * samples_per_segment
-        end = start + samples_per_segment
+    with open(metadata_path, mode="w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["segmento", "hablante", "inicio", "fin", "archivo"])
 
-        segment = audio[start:end]
+        for i, (segment, _, speaker) in enumerate(diarization.itertracks(yield_label=True)):
+            start_sample = int(segment.start * sr)
+            end_sample = int(segment.end * sr)
 
-		# Completa con ceros el último segmento
-        if len(segment) < samples_per_segment:
-            padding = samples_per_segment - len(segment)
-            segment = np.pad(segment, (0, padding), mode="constant")
+            audio_segment = audio[start_sample:end_sample]
 
-        segment_name = f"{base_name}_segment_{i:04d}.wav"
-        segment_path = os.path.join(output_dir, segment_name)
+            segment_name = f"{base_name}_{speaker}_{i:04d}.wav"
+            segment_path = os.path.join(output_dir, segment_name)
 
-		# Guarda el segmento
-        sf.write(segment_path, segment, sample_rate)
+            sf.write(segment_path, audio_segment, sr)
 
+            writer.writerow([
+                i,
+                speaker,
+                round(segment.start, 3),
+                round(segment.end, 3),
+                segment_name
+            ])
 
 def main():
 
@@ -188,7 +190,7 @@ def main():
     parser.add_argument("--normalized_dir", default="data/normalized", help="Carpeta para audio normalizado.")
     parser.add_argument("--segments_dir", default="data/segments", help="Carpeta para segmentos.")
     parser.add_argument("--sample_rate", type=int, default=16000, help="Frecuencia de muestreo objetivo.")
-    parser.add_argument("--segment_duration", type=int, default=30, help="Duración de segmentos en segundos.")
+	parser.add_argument("--hf_token", required=True, help="Token de Hugging Face para pyannote.audio.")
 
     args = parser.parse_args()
 
@@ -214,12 +216,12 @@ def main():
     print("Segmentando audio...")
 	
 	# Se generan los segmentos
-    segment_audio(
-        input_path=normalized_path,
-        output_dir=args.segments_dir,
-        segment_duration=args.segment_duration,
-        sample_rate=args.sample_rate
-    )
+    diarize_audio(
+	    input_path=normalized_path,
+	    output_dir=args.segments_dir,
+	    hf_token=args.hf_token,
+	    sample_rate=args.sample_rate
+	)
 
     print("Proceso finalizado correctamente.")
 
