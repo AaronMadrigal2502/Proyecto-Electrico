@@ -4,6 +4,5 @@ librosa
 soundfile
 numpy
 tqdm
-ffmpeg
 openai-whisper
 torch
