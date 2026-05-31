@@ -16,11 +16,12 @@ FUNCIONAMIENTO.
 
 
 Ejemplo de ejecución:
-python3 scripts/acquire_preprocess_audio.py 
-  --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION" 
-  --segment_duration 30 
+python3 scripts/acquire_preprocess_audio.py \
+  --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION" \
+  --top_db 30 \
+  --min_segment_duration 1.0 \
   --sample_rate 16000
-o simplemente:
+  o simplemente:
 python3 scripts/acquire_preprocess_audio.py --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION"
 
 """
@@ -150,7 +151,6 @@ def segment_audio_by_voice_activity(
         mono=True
     )
 
-    # <<< NUEVO >>>
     intervals = librosa.effects.split(
         audio,
         top_db=top_db
