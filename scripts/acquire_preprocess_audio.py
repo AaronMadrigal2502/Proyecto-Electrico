@@ -234,7 +234,7 @@ def main():
     parser.add_argument("--raw_dir", default="data/raw", help="Carpeta para audio original.")
     parser.add_argument("--normalized_dir", default="data/normalized", help="Carpeta para audio normalizado.")
     parser.add_argument("--segments_dir", default="data/segments", help="Carpeta para segmentos.")
-    parser.add_argument("--sample_rate", type=int, default=16000, help="Frecuencia de muestreo objetivo.")
+	parser.add_argument("--sample_rate", type=int, default=16000, help="Frecuencia de muestreo objetivo.")
 	parser.add_argument("--top_db", type=int, default=30, help="Sensibilidad para detección de voz.")
 	parser.add_argument("--min_segment_duration", type=float, default=1.0, help="Duración mínima de un segmento.")
 	
