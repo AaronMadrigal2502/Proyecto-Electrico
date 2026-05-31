@@ -21,9 +21,9 @@ python3 scripts/acquire_preprocess_audio.py \
   --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION" \
   --top_db 30 \
   --min_segment_duration 1.0 \
-  --sample_rate 16000
-  o simplemente:
-python3 scripts/acquire_preprocess_audio.py --url "https://www.youtube.com/watch?v=URL_DE_LA_SESION"
+  --sample_rate 16000 \
+  --whisper_model small \
+  --language es  
 
 """
 
