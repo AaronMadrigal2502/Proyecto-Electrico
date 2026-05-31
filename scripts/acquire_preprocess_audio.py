@@ -7,6 +7,7 @@ Funcionalidades:
 3. Normaliza la señal.
 4. Remuestrea el audio a 16 kHz mono.
 5. Segmenta automáticamente el audio según regiones con actividad de voz.
+6. Transcribe automáticamente los segmentos usando Whisper.
 
 Aarón Madrigal Marín - C14373
 
@@ -138,7 +139,7 @@ def segment_audio_by_voice_activity(
     sample_rate: int = 16000,
     top_db: int = 30,
     min_segment_duration: float = 1.0
-) -> None:
+) -> str:
 
     """
     Segmenta el audio usando detección de actividad de voz.
@@ -282,6 +283,7 @@ def main():
     parser.add_argument("--raw_dir", default="data/raw", help="Carpeta para audio original.")
     parser.add_argument("--normalized_dir", default="data/normalized", help="Carpeta para audio normalizado.")
     parser.add_argument("--segments_dir", default="data/segments", help="Carpeta para segmentos.")
+    parser.add_argument("--transcripts_dir", default="data/transcripts", help="Carpeta para guardar las transcripciones.")
     parser.add_argument("--sample_rate", type=int, default=16000, help="Frecuencia de muestreo objetivo.")
     parser.add_argument("--top_db", type=int, default=30, help="Sensibilidad para detección de voz.")
     parser.add_argument("--min_segment_duration", type=float, default=1.0, help="Duración mínima de un segmento.")
