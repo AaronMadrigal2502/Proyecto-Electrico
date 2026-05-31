@@ -223,6 +223,53 @@ def segment_audio_by_voice_activity(
             ])
 
             segment_index += 1
+    return metadata_path
+
+def transcribe_segments(
+    metadata_path: str,
+    segments_dir: str,
+    output_path: str,
+    model_name: str = "small",
+    language: str = "es"
+) -> None:
+    """
+    Transcribe los segmentos generados usando Whisper.
+
+    Args:
+        metadata_path: CSV generado durante la segmentación.
+        segments_dir: Carpeta donde están los segmentos WAV.
+        output_path: Ruta del CSV final con transcripciones.
+        model_name: Modelo de Whisper a utilizar.
+        language: Idioma esperado del audio.
+    """
+
+    model = whisper.load_model(model_name)
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    with open(metadata_path, mode="r", encoding="utf-8") as metadata_file:
+        reader = csv.DictReader(metadata_file)
+        rows = list(reader)
+
+    with open(output_path, mode="w", newline="", encoding="utf-8") as output_file:
+        fieldnames = ["segmento", "inicio", "fin", "duracion", "archivo", "transcripcion"]
+        writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+        writer.writeheader()
+
+        for row in tqdm(rows, desc="Transcribiendo segmentos"):
+            segment_path = os.path.join(segments_dir, row["archivo"])
+
+            result = model.transcribe(
+                segment_path,
+                language=language,
+                fp16=False
+            )
+
+            row["transcripcion"] = result["text"].strip()
+            writer.writerow(row)
+
+
+
 def main():
 
 	# Configuración de argumentos
@@ -237,6 +284,9 @@ def main():
     parser.add_argument("--sample_rate", type=int, default=16000, help="Frecuencia de muestreo objetivo.")
     parser.add_argument("--top_db", type=int, default=30, help="Sensibilidad para detección de voz.")
     parser.add_argument("--min_segment_duration", type=float, default=1.0, help="Duración mínima de un segmento.")
+    parser.add_argument("--whisper_model", default="small", help="Modelo de Whisper: tiny, base, small, medium o large.")
+    parser.add_argument("--language", default="es", help="Idioma del audio para Whisper.")
+    parser.add_argument("--skip_transcription", action="store_true", help="Solo segmenta el audio, sin transcribir.")
 	
     args = parser.parse_args()
 
@@ -262,7 +312,7 @@ def main():
     print("Segmentando audio...")
 	
 	# Se generan los segmentos
-    segment_audio_by_voice_activity(
+    metadata_path = segment_audio_by_voice_activity(
     	input_path=normalized_path,
     	output_dir=args.segments_dir,
     	sample_rate=args.sample_rate,
@@ -270,8 +320,26 @@ def main():
     	min_segment_duration=args.min_segment_duration
 	)
 
-    print("Proceso finalizado correctamente.")
+    if not args.skip_transcription:
+        base_name = os.path.splitext(os.path.basename(normalized_path))[0]
+        transcript_path = os.path.join(
+            args.transcripts_dir,
+            f"{base_name}_transcription.csv"
+        )
 
+        print("Transcribiendo segmentos con Whisper...")
+        
+		transcribe_segments(
+            metadata_path=metadata_path,
+            segments_dir=args.segments_dir,
+            output_path=transcript_path,
+            model_name=args.whisper_model,
+            language=args.language
+        )
+
+        print(f"Transcripción guardada en: {transcript_path}")
+
+    print("Proceso finalizado correctamente.")
 
 if __name__ == "__main__":
     main()
