@@ -21,6 +21,7 @@ Instalar las dependencias con:
 
 ```bash
 pip install -r requirements.txt
+```
 
 Este proyecto requiere FFmpeg instalado en el sistema.
 
