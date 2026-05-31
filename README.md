@@ -26,4 +26,6 @@ pip install -r requirements.txt
 Este proyecto requiere FFmpeg instalado en el sistema.
 
 Ubuntu:
+```bash
 sudo apt install ffmpeg
+```
