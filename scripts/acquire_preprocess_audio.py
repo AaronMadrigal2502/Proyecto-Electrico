@@ -32,6 +32,7 @@ import numpy as np
 import librosa
 import soundfile as sf
 import csv
+import whisper
 from yt_dlp import YoutubeDL
 from tqdm import tqdm
 
@@ -329,7 +330,7 @@ def main():
 
         print("Transcribiendo segmentos con Whisper...")
         
-		transcribe_segments(
+        transcribe_segments(
             metadata_path=metadata_path,
             segments_dir=args.segments_dir,
             output_path=transcript_path,
