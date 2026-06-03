@@ -132,13 +132,35 @@ def preprocess_audio(input_path: str, output_path: str, sample_rate: int = 16000
 	# Guarda el audio procesado
     sf.write(output_path, audio, sample_rate)
 
+def merge_close_intervals(intervals, sample_rate, merge_gap: float = 2.0):
+    """
+    Une segmentos separados por pausas cortas.
+    """
+
+    if len(intervals) == 0:
+        return intervals
+
+    max_gap_samples = int(merge_gap * sample_rate)
+    merged = [list(intervals[0])]
+
+    for start, end in intervals[1:]:
+        previous_start, previous_end = merged[-1]
+
+        if start - previous_end <= max_gap_samples:
+            merged[-1][1] = end
+        else:
+            merged.append([start, end])
+
+    return np.array(merged)
 
 def segment_audio_by_voice_activity(
     input_path: str,
     output_dir: str,
     sample_rate: int = 16000,
     top_db: int = 30,
-    min_segment_duration: float = 1.0
+    min_segment_duration: float = 1.0,
+    merge_gap: float = 2.0,
+    padding: float = 0.3
 ) -> str:
 
     """
@@ -156,6 +178,12 @@ def segment_audio_by_voice_activity(
     intervals = librosa.effects.split(
         audio,
         top_db=top_db
+    )
+
+	intervals = merge_close_intervals(
+    intervals,
+    sample_rate,
+    merge_gap=merge_gap
     )
 
     base_name = os.path.splitext(
@@ -196,9 +224,12 @@ def segment_audio_by_voice_activity(
             if duration < min_segment_duration:
                 continue
 
-            segment = audio[
-                start_sample:end_sample
-            ]
+            padding_samples = int(padding * sample_rate)
+
+            start_sample = max(0, start_sample - padding_samples)
+            end_sample = min(len(audio), end_sample + padding_samples)
+
+            segment = audio[start_sample:end_sample]
 
             segment_name = (
                 f"{base_name}_segment_"
@@ -290,6 +321,8 @@ def main():
     parser.add_argument("--whisper_model", default="small", help="Modelo de Whisper: tiny, base, small, medium o large.")
     parser.add_argument("--language", default="es", help="Idioma del audio para Whisper.")
     parser.add_argument("--skip_transcription", action="store_true", help="Solo segmenta el audio, sin transcribir.")
+    parser.add_argument("--merge_gap", type=float, default=2.0, help="Une segmentos separados por pausas menores a este valor en segundos.")
+    parser.add_argument("--padding", type=float, default=0.3, help="Margen agregado antes y después de cada segmento.")
 	
     args = parser.parse_args()
 
@@ -316,12 +349,14 @@ def main():
 	
 	# Se generan los segmentos
     metadata_path = segment_audio_by_voice_activity(
-    	input_path=normalized_path,
-    	output_dir=args.segments_dir,
-    	sample_rate=args.sample_rate,
-    	top_db=args.top_db,
-    	min_segment_duration=args.min_segment_duration
-	)
+        input_path=normalized_path,
+        output_dir=args.segments_dir,
+        sample_rate=args.sample_rate,
+        top_db=args.top_db,
+        min_segment_duration=args.min_segment_duration,
+        merge_gap=args.merge_gap,
+        padding=args.padding
+    )
 
     if not args.skip_transcription:
         base_name = os.path.splitext(os.path.basename(normalized_path))[0]
