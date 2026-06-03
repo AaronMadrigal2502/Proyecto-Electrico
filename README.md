@@ -29,3 +29,15 @@ Ubuntu:
 ```bash
 sudo apt install ffmpeg
 ```
+
+## Ejecución
+Ejemplo:
+```
+python3 scripts/acquire_preprocess_audio.py \
+  --url "URL_DE_LA_SESION" \
+  --top_db 30 \
+  --min_segment_duration 2 \
+  --merge_gap 2 \
+  --padding 0.3 \
+  --whisper_model base
+```
