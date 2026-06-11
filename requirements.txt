@@ -6,3 +6,4 @@ numpy
 tqdm
 openai-whisper
 torch
+jiwer
