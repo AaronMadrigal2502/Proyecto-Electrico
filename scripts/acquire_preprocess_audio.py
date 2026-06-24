@@ -291,8 +291,8 @@ def transcribe_segments(
 
         for row in tqdm(rows, desc="Transcribiendo segmentos"):
             segment_path = os.path.join(segments_dir, row["archivo"])
-			
-			result = model.transcribe(
+
+            result = model.transcribe(
                 segment_path,
                 language=language,
                 task="transcribe",
