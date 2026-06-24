@@ -291,14 +291,29 @@ def transcribe_segments(
 
         for row in tqdm(rows, desc="Transcribiendo segmentos"):
             segment_path = os.path.join(segments_dir, row["archivo"])
-
-            result = model.transcribe(
+			
+			result = model.transcribe(
                 segment_path,
                 language=language,
-                fp16=False
+                task="transcribe",
+                fp16=False,
+                no_speech_threshold=0.95,
+                logprob_threshold=-2.0,
+                condition_on_previous_text=False,
+                initial_prompt=(
+                    "Transcripción de una sesión legislativa de Costa Rica. "
+                    "Se mencionan diputadas, diputados, Asamblea Legislativa, "
+                    "comisiones legislativas, proyectos de ley, expedientes, mociones, "
+                    "Presidencia, Plenario Legislativo y votaciones."
+                )
             )
 
-            row["transcripcion"] = result["text"].strip()
+            text = result.get("text", "").strip()
+
+            if text == "":
+                print(f"Advertencia: Whisper no generó texto para {segment_path}")
+
+            row["transcripcion"] = text
             writer.writerow(row)
 
 
