@@ -180,7 +180,7 @@ def segment_audio_by_voice_activity(
         top_db=top_db
     )
 
-	intervals = merge_close_intervals(
+    intervals = merge_close_intervals(
     intervals,
     sample_rate,
     merge_gap=merge_gap
@@ -284,7 +284,7 @@ def transcribe_segments(
         reader = csv.DictReader(metadata_file)
         rows = list(reader)
 
-    with open(output_path, mode="w", newline="", encoding="utf-8") as output_file:
+    with open(output_path, mode="w", newline="", encoding="utf-8-sig") as output_file:
         fieldnames = ["segmento", "inicio", "fin", "duracion", "archivo", "transcripcion"]
         writer = csv.DictWriter(output_file, fieldnames=fieldnames)
         writer.writeheader()

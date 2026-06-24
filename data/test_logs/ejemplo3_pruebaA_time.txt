@@ -1,0 +1,5 @@
+WARNING: [youtube] No supported JavaScript runtime could be found. Only deno is enabled by default; to use another runtime add  --js-runtimes RUNTIME[:PATH]  to your command/config. YouTube extraction without a JS runtime has been deprecated, and some formats may be missing. See  https://github.com/yt-dlp/yt-dlp/wiki/EJS  for details on installing one
+Transcribiendo segmentos:   0%|          | 0/1 [00:00<?, ?it/s]Transcribiendo segmentos: 100%|██████████| 1/1 [00:09<00:00,  9.16s/it]Transcribiendo segmentos: 100%|██████████| 1/1 [00:09<00:00,  9.16s/it]
+real 15.49
+user 34.78
+sys 4.92

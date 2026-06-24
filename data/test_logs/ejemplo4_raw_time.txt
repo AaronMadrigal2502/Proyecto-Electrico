@@ -1,0 +1,5 @@
+/home/aaron/.local/lib/python3.10/site-packages/whisper/transcribe.py:126: UserWarning: FP16 is not supported on CPU; using FP32 instead
+  warnings.warn("FP16 is not supported on CPU; using FP32 instead")
+real 825.63
+user 2896.39
+sys 237.64
